@@ -17,11 +17,11 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        inherit (pkgs) lib;
+        inherit (pkgs) callPackage ruby;
       in {
         packages = rec {
           default = bundix;
-          bundix = lib.callPackage ./default.nix { };
+          bundix = callPackage ./default.nix { inherit ruby; };
         };
 
         apps.default = {
