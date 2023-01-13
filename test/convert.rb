@@ -37,16 +37,29 @@ class TestConvert < Minitest::Test
       :gemfile => File.expand_path("data/rails-app/Gemfile", __dir__),
       :lockfile => File.expand_path("data/rails-app/Gemfile.lock", __dir__)
     ) do |gemset|
+      # test local gem
       assert_equal(gemset.dig("phony_gem", :version), "0.1.0")
       assert_equal(gemset.dig("phony_gem", :source, :type), "path")
       assert_equal(gemset.dig("phony_gem", :source, :path), "lib/phony_gem")
+
+      # test dependencies
       assert_includes(gemset.dig("rails", :dependencies), "railties")
       assert_includes(gemset.dig("nokogiri", :dependencies), "racc")
+
+      # test native gem
       assert_equal(gemset.dig("sqlite3", :source), nil)
       assert_equal(gemset.dig("sqlite3", :targets).first[:type], "gem")
       assert_equal(gemset.dig("sqlite3", :targets).first[:target], "x86_64-linux")
       assert_equal(gemset.dig("sqlite3", :targets).first[:targetCPU], "x86_64")
-      assert_equal(gemset.dig("sqlite3", :targets).first[:targetOS], "linux")
+
+      # test git source
+      assert_equal(gemset.dig("apparition", :source, :type), "git")
+      assert_equal(gemset.dig("apparition", :source, :url),
+                   "https://github.com/twalpole/apparition.git")
+      assert_equal(gemset.dig("apparition", :source, :rev),
+                   "ca86be4d54af835d531dbcd2b86e7b2c77f85f34")
+      assert_equal(gemset.dig("apparition", :source, :fetchSubmodules), false)
+      assert_equal(gemset.dig("apparition", :targets), [])
     end
   end
 end

@@ -57,6 +57,7 @@ class Bundix
         target = v.dig(:source, :target)
         if target == "ruby" or target.nil?
           primary = v
+          primary[:source][:target] = "ruby" if target.nil?
         else
           targets << v[:source]
         end
