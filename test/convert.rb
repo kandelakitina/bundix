@@ -42,7 +42,7 @@ class TestConvert < Minitest::Test
       assert_equal(gemset.dig("phony_gem", :source, :path), "lib/phony_gem")
       assert_includes(gemset.dig("rails", :dependencies), "railties")
       assert_includes(gemset.dig("nokogiri", :dependencies), "racc")
-      assert_equal(gemset.dig("sqlite3", :source), {})
+      assert_equal(gemset.dig("sqlite3", :source), nil)
       assert_equal(gemset.dig("sqlite3", :targets).first[:type], "gem")
       assert_equal(gemset.dig("sqlite3", :targets).first[:target], "x86_64-linux")
       assert_equal(gemset.dig("sqlite3", :targets).first[:targetCPU], "x86_64")
