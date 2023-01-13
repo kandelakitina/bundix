@@ -2,7 +2,7 @@
 , bundler ? (pkgs.bundler.override { inherit ruby; }), nix ? pkgs.nix
 , nix-prefetch-git ? pkgs.nix-prefetch-git, }:
 pkgs.stdenv.mkDerivation rec {
-  version = "2.5.0-f2";
+  version = "2.5.0-f3";
   name = "bundix";
   src = ./.;
   phases = "installPhase";
