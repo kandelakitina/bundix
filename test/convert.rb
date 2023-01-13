@@ -34,8 +34,8 @@ class TestConvert < Minitest::Test
 
   def test_bundler_dep
     with_gemset(
-      :gemfile => File.expand_path("data/bundler-audit/Gemfile", __dir__),
-      :lockfile => File.expand_path("data/bundler-audit/Gemfile.lock", __dir__)
+      :gemfile => File.expand_path("data/rails-app/Gemfile", __dir__),
+      :lockfile => File.expand_path("data/rails-app/Gemfile.lock", __dir__)
     ) do |gemset|
       assert_equal(gemset.dig("phony_gem", :version), "0.1.0")
       assert_equal(gemset.dig("phony_gem", :source, :type), "path")
