@@ -45,7 +45,7 @@ class Bundix
     lock.specs.reverse_each do |spec|
       gem = convert_spec(spec, dep_cache)
       if spec.dependencies.any?
-        gem['dependencies'] = spec.dependencies.map(&:name) - ['bundler']
+        gem[:dependencies] = spec.dependencies.map(&:name) - ['bundler']
       end
       gems[spec.name] << gem
     end
@@ -54,8 +54,8 @@ class Bundix
       primary = nil
       targets = []
       variants.each do |v|
-        target = v[:source][:target]
-        if target == "ruby"
+        target = v.dig(:source, :target)
+        if target == "ruby" or target.nil?
           primary = v
         else
           targets << v[:source]

@@ -179,7 +179,7 @@ class Bundix
         version: spec.version.to_s,
         source: {
           type: 'path',
-          path: spec.source.path,
+          path: spec.source.path.to_s,
         },
       }
     end

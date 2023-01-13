@@ -5,15 +5,6 @@ require 'json'
 
 class TestConvert < Minitest::Test
   class PrefetchStub < Bundix::Fetcher
-    SPECS = {
-      "sorbet-static" => {
-        platform: 'arm64-darwin-21',
-      },
-      "sqlite3" => {
-        platform: 'universal-darwin-22',
-      },
-    }
-
     def nix_prefetch_url(*args)
       format_hash(Digest::SHA256.hexdigest(args.to_s))
     end
@@ -25,19 +16,6 @@ class TestConvert < Minitest::Test
     def fetch_local_hash(spec)
       # Force to use fetch_remote_hash
       return nil
-    end
-
-    # speed tests up and override platform from SPECS
-    def spec_for_dependency(remote, dependency)
-      name = dependency.name
-      opts = SPECS[name]
-      raise "Unexpected spec query: #{name}" unless opts
-
-      Gem::Specification.new do |s|
-        s.name = name
-        s.version = dependency.version
-        s.platform = Gem::Platform.new(opts[:platform]) if opts[:platform]
-      end
     end
   end
 
@@ -59,11 +37,16 @@ class TestConvert < Minitest::Test
       :gemfile => File.expand_path("data/bundler-audit/Gemfile", __dir__),
       :lockfile => File.expand_path("data/bundler-audit/Gemfile.lock", __dir__)
     ) do |gemset|
-      assert_equal(gemset.dig("sorbet-static", :version), "0.5.10624")
-      assert_equal(gemset.dig("sorbet-static", :targets).first[:target], "arm64-darwin-21")
-      assert_equal(gemset.dig("sorbet-static", :targets).first[:targetCPU], "arm64")
-      assert_equal(gemset.dig("sorbet-static", :targets).first[:targetOS], "darwin")
+      assert_equal(gemset.dig("phony_gem", :version), "0.1.0")
+      assert_equal(gemset.dig("phony_gem", :source, :type), "path")
+      assert_equal(gemset.dig("phony_gem", :source, :path), "lib/phony_gem")
+      assert_includes(gemset.dig("rails", :dependencies), "railties")
+      assert_includes(gemset.dig("nokogiri", :dependencies), "racc")
       assert_equal(gemset.dig("sqlite3", :source), nil)
+      assert_equal(gemset.dig("sqlite3", :targets).first[:type], "gem")
+      assert_equal(gemset.dig("sqlite3", :targets).first[:target], "x86_64-linux")
+      assert_equal(gemset.dig("sqlite3", :targets).first[:targetCPU], "x86_64")
+      assert_equal(gemset.dig("sqlite3", :targets).first[:targetOS], "linux")
     end
   end
 end
