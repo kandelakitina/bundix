@@ -20,7 +20,7 @@ class Bundix
       end
 
       begin
-        URI.open(uri.to_s, 'r', 0600, open_options) do |net|
+        open(uri.to_s, 'r', 0600, open_options) do |net|
           File.open(file, 'wb+') { |local|
             File.copy_stream(net, local)
           }
@@ -101,7 +101,7 @@ class Bundix
         if has_platform
           # Find first gem that matches the platform
           platform = File.basename(path, '.gem')[(name_version.size + 1)..-1]
-          next unless Gem::Platform.match(platform)
+          next unless spec.platform =~ platform
         end
 
         hash = nix_prefetch_url(path)[SHA256_32]
@@ -126,8 +126,7 @@ class Bundix
         # Fetch remote spec to determine the exact platform
         # Note that we can't simply use the local platform; the platform of the gem might differ.
         # e.g. universal-darwin-14 covers x86_64-darwin-14
-        spec = spec_for_dependency(remote, spec.name, spec.version)
-        return unless spec
+        spec = spec_for_dependency(remote, spec)
       end
 
       uri = "#{remote}/gems/#{spec.full_name}.gem"
@@ -141,16 +140,22 @@ class Bundix
       nil
     end
 
-    # res = Gem::SpecFetcher.new(Gem::SourceList.from(["https://rubygems.org"])).
-    #   spec_for_dependency(Gem::Dependency.new("nokogiri"), false)
-    # res.first.map do |n| p = n.first.platform;
+    # dep = Gem::Dependency.new("nokogiri", "1.14.0")
+    # sources = Gem::SourceList.from(["https://rubygems.org"])
+    # specs, _errors = Gem::SpecFetcher.new(sources).spec_for_dependency(dep, false)
+    #
+    # specs.map do |spec, source| p = spec.platform;
     #   (p.respond_to?(:cpu) ? [p.cpu, p.os, p.version] : p)
     # end
-    def spec_for_dependency(remote, name, version)
+    def spec_for_dependency(remote, dependency)
       sources = Gem::SourceList.from([remote])
-      spec = Gem::SpecFetcher.new(sources).spec_for_dependency \
-        Gem::Dependency.new(name, version), false
-      spec.first&.first&.first
+      dep = Gem::Dependency.new(dependency.name, dependency.version)
+      match_current_platform = false
+      specs, _errors = Gem::SpecFetcher.new(sources).spec_for_dependency(dep, match_current_platform)
+      specs.each do |spec, source|
+        return spec if dependency.platform == spec.platform
+      end
+      fail "Unable to find compatible rubygem source for #{dependency.platform.to_s}."
     end
   end
 
@@ -186,20 +191,21 @@ class Bundix
       fail "couldn't fetch hash for #{spec.full_name}" unless hash
 
       version = spec.version.to_s
-      if platform && platform != Gem::Platform::RUBY
-        version += "-#{platform}"
-      end
-
-      puts "#{hash} => #{spec.name}-#{version}.gem" if $VERBOSE
-
-      {
+      nixspec = {
         version: version,
         source: {
           type: 'gem',
           remotes: (remote ? [remote] : remotes),
           sha256: hash,
+          target: platform,
         },
       }
+      if platform != "ruby"
+        native_platform = Gem::Platform.new(platform)
+        nixspec[:source][:targetCPU] = native_platform.cpu
+        nixspec[:source][:targetOS] = native_platform.os
+      end
+      nixspec
     end
 
     def convert_git

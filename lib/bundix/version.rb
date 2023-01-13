@@ -1,3 +1,3 @@
 class Bundix
-  VERSION = '2.5.0-r1'
+  VERSION = '2.5.0'
 end

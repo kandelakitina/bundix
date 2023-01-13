@@ -39,15 +39,35 @@ class Bundix
     lock = parse_lockfile
     dep_cache = build_depcache(lock)
 
-    # reverse so git comes last
-    lock.specs.reverse_each.with_object({}) do |spec, gems|
-      gem = convert_spec(spec, dep_cache)
-      gems.merge!(gem)
+    gems = Hash.new { |h, k| h[k] = [] }
 
+    # reverse so git comes last
+    lock.specs.reverse_each do |spec|
+      gem = convert_spec(spec, dep_cache)
       if spec.dependencies.any?
-        gems[spec.name]['dependencies'] = spec.dependencies.map(&:name) - ['bundler']
+        gem['dependencies'] = spec.dependencies.map(&:name) - ['bundler']
       end
+      gems[spec.name] << gem
     end
+
+    gems.map do |name, variants|
+      primary = nil
+      targets = []
+      variants.each do |v|
+        target = v[:source][:target]
+        if target == "ruby"
+          primary = v
+        else
+          targets << v[:source]
+        end
+      end
+      if primary.nil?
+        spec = variants.first.clone
+        spec[:source] = nil
+        primary = spec
+      end
+      [name, primary.merge(targets: targets)]
+    end.to_h
   end
 
   def groups(spec, dep_cache)
@@ -85,17 +105,14 @@ class Bundix
   end
 
   def convert_spec(spec, dep_cache)
-    {
-      spec.name => [
-        platforms(spec, dep_cache),
-        groups(spec, dep_cache),
-        Source.new(spec, fetcher).convert,
-      ].inject(&:merge),
-    }
+    [ platforms(spec, dep_cache),
+      groups(spec, dep_cache),
+      Source.new(spec, fetcher).convert,
+    ].inject(&:merge)
   rescue => ex
     warn "Skipping #{spec.name}: #{ex}"
     puts ex.backtrace
-    {spec.name => {}}
+    {}
   end
 
   def build_depcache(lock)

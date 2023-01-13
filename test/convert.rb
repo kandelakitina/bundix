@@ -7,7 +7,7 @@ class TestConvert < Minitest::Test
   class PrefetchStub < Bundix::Fetcher
     SPECS = {
       "sorbet-static" => {
-        platform: 'java-123',
+        platform: 'arm64-darwin-21',
       },
       "sqlite3" => {
         platform: 'universal-darwin-22',
@@ -27,13 +27,15 @@ class TestConvert < Minitest::Test
       return nil
     end
 
-    def spec_for_dependency(remote, name, version)
+    # speed tests up and override platform from SPECS
+    def spec_for_dependency(remote, dependency)
+      name = dependency.name
       opts = SPECS[name]
       raise "Unexpected spec query: #{name}" unless opts
 
       Gem::Specification.new do |s|
         s.name = name
-        s.version = version
+        s.version = dependency.version
         s.platform = Gem::Platform.new(opts[:platform]) if opts[:platform]
       end
     end
@@ -57,10 +59,11 @@ class TestConvert < Minitest::Test
       :gemfile => File.expand_path("data/bundler-audit/Gemfile", __dir__),
       :lockfile => File.expand_path("data/bundler-audit/Gemfile.lock", __dir__)
     ) do |gemset|
-      assert_equal("0.9.1", gemset.dig("bundler-audit", :version))
-      assert_equal("1.2.1", gemset.dig("thor", :version))
-      assert_equal("0.5.10607-java-unknown", gemset.dig("sorbet-static", :version))
-      assert_equal("1.5.4-universal-darwin-22", gemset.dig("sqlite3", :version))
+      assert_equal(gemset.dig("sorbet-static", :version), "0.5.10624")
+      assert_equal(gemset.dig("sorbet-static", :targets).first[:target], "arm64-darwin-21")
+      assert_equal(gemset.dig("sorbet-static", :targets).first[:targetCPU], "arm64")
+      assert_equal(gemset.dig("sorbet-static", :targets).first[:targetOS], "darwin")
+      assert_equal(gemset.dig("sqlite3", :source), nil)
     end
   end
 end
