@@ -200,8 +200,8 @@ class Bundix
           target: platform,
         },
       }
-      if platform != "ruby"
-        native_platform = Gem::Platform.new(platform)
+      native_platform = Gem::Platform.new(platform)
+      if native_platform.respond_to? :cpu
         nixspec[:source][:targetCPU] = native_platform.cpu
         nixspec[:source][:targetOS] = native_platform.os
       end
