@@ -63,7 +63,7 @@ class Bundix
       end
       if primary.nil?
         spec = variants.first.clone
-        spec[:source] = nil
+        spec[:source] = {}
         primary = spec
       end
       [name, primary.merge(targets: targets)]
