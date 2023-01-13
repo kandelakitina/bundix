@@ -146,6 +146,11 @@ class Bundix
     end
 
     def build_gemset
+      unless File.exist? "Gemfile.lock"
+        puts "missing Gemfile.lock"
+        return
+      end
+
       Bundix.new(options).convert
     end
 

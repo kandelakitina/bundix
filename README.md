@@ -5,6 +5,12 @@ applications with the [Nix](http://nixos.org/nix/) package manager.
 
 This is a fork of the official [bundix](https://github.com/nix-community/bundix), used by [ruby-nix](https://github.com/sagittaros/ruby-nix).
 
+## Installation
+
+``` sh
+nix profile install github:sagittaros/bundix
+```
+
 ## How & Why
 
 "I'd usually just tell you to read the code yourself, but the big picture is

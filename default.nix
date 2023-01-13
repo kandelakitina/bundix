@@ -1,12 +1,8 @@
-{
-  pkgs ? (import <nixpkgs> {}),
-  ruby ? pkgs.ruby_2_6,
-  bundler ? (pkgs.bundler.override { inherit ruby; }),
-  nix ? pkgs.nix,
-  nix-prefetch-git ? pkgs.nix-prefetch-git,
-}:
+{ pkgs ? (import <nixpkgs> { }), ruby ? pkgs.ruby_2_7
+, bundler ? (pkgs.bundler.override { inherit ruby; }), nix ? pkgs.nix
+, nix-prefetch-git ? pkgs.nix-prefetch-git, }:
 pkgs.stdenv.mkDerivation rec {
-  version = "2.5.0";
+  version = "2.5.0-f2";
   name = "bundix";
   src = ./.;
   phases = "installPhase";
@@ -16,6 +12,7 @@ pkgs.stdenv.mkDerivation rec {
       --prefix PATH : "${nix.out}/bin" \
       --prefix PATH : "${nix-prefetch-git.out}/bin" \
       --prefix PATH : "${bundler.out}/bin" \
+      --prefix PATH : "${ruby}/bin" \
       --set GEM_PATH "${bundler}/${bundler.ruby.gemPath}"
   '';
 
