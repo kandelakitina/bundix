@@ -10,7 +10,6 @@ class Dependency < Bundler::Dependency
 end
 
 def parse_gemfiles(gemfile, lockfile)
-  #
   lock = Bundler::LockfileParser.new(File.read(lockfile))
   definition = Bundler::Definition.build(gemfile, lockfile, false)
 

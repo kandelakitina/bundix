@@ -55,7 +55,7 @@ class Bundix
     gems = Hash.new { |h, k| h[k] = [] }
 
     lock.specs.each do |spec|
-      gem = convert_spec(spec, deps)
+      gem = build_gemspec(spec, deps)
       if spec.dependencies.any?
         gem[:dependencies] = spec.dependencies.map(&:name) - ["bundler"]
       end
@@ -83,6 +83,16 @@ class Bundix
     end.to_h
   end
 
+  def build_gemspec(spec, deps)
+    [platforms(spec, deps),
+     groups(spec, deps),
+     Source.new(spec, fetcher).convert].inject(&:merge)
+  rescue => ex
+    warn "Skipping #{spec.name}: #{ex}"
+    puts ex.backtrace
+    {}
+  end
+
   def groups(spec, deps)
     { groups: deps.fetch(spec.name).groups }
   end
@@ -94,16 +104,6 @@ class Bundix
     end.flatten
 
     { platforms: platforms }
-  end
-
-  def convert_spec(spec, deps)
-    [platforms(spec, deps),
-     groups(spec, deps),
-     Source.new(spec, fetcher).convert].inject(&:merge)
-  rescue => ex
-    warn "Skipping #{spec.name}: #{ex}"
-    puts ex.backtrace
-    {}
   end
 
   def parse_gemset
