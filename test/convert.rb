@@ -1,7 +1,7 @@
-require 'minitest/autorun'
-require 'bundix'
-require 'digest'
-require 'json'
+require "minitest/autorun"
+require "bundix"
+require "digest"
+require "json"
 
 class TestConvert < Minitest::Test
   class PrefetchStub < Bundix::Fetcher
@@ -23,7 +23,7 @@ class TestConvert < Minitest::Test
     Bundler.instance_variable_set(:@root, Pathname.new(File.expand_path("data", __dir__)))
     bundle_gemfile = ENV["BUNDLE_GEMFILE"]
     ENV["BUNDLE_GEMFILE"] = options[:gemfile]
-    options = {:deps => false, :lockfile => "", :gemset => ""}.merge(options)
+    options = { :deps => false, :lockfile => "", :gemset => "" }.merge(options)
     converter = Bundix.new(options)
     converter.fetcher = PrefetchStub.new
     yield(converter.convert)
@@ -35,7 +35,7 @@ class TestConvert < Minitest::Test
   def test_bundler_dep
     with_gemset(
       :gemfile => File.expand_path("data/rails-app/Gemfile", __dir__),
-      :lockfile => File.expand_path("data/rails-app/Gemfile.lock", __dir__)
+      :lockfile => File.expand_path("data/rails-app/Gemfile.lock", __dir__),
     ) do |gemset|
       # test local gem
       assert_equal(gemset.dig("phony_gem", :version), "0.1.0")
@@ -47,7 +47,7 @@ class TestConvert < Minitest::Test
       assert_includes(gemset.dig("nokogiri", :dependencies), "racc")
 
       # test native gem
-      assert_equal(gemset.dig("sqlite3", :source), nil)
+      assert_nil(gemset.dig("sqlite3", :source))
       assert_equal(gemset.dig("sqlite3", :targets).first[:type], "gem")
       assert_equal(gemset.dig("sqlite3", :targets).first[:target], "x86_64-linux")
       assert_equal(gemset.dig("sqlite3", :targets).first[:targetCPU], "x86_64")
