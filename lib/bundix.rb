@@ -54,8 +54,7 @@ class Bundix
 
     gems = Hash.new { |h, k| h[k] = [] }
 
-    # reverse so git comes last
-    lock.specs.reverse_each do |spec|
+    lock.specs.each do |spec|
       gem = convert_spec(spec, deps)
       if spec.dependencies.any?
         gem[:dependencies] = spec.dependencies.map(&:name) - ["bundler"]
