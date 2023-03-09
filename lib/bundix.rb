@@ -73,9 +73,6 @@ class Bundix
       gems[spec.name] << gem
     end
 
-    # require "pry"
-    # binding.pry
-
     gems.map do |name, variants|
       primary = nil
       targets = []
@@ -126,7 +123,7 @@ class Bundix
       end
     }
 
-    cached #.transform_keys(&:to_sym) if cached
+    cached
   end
 
   def groups(spec, deps)
