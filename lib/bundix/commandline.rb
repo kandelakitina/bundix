@@ -31,7 +31,6 @@ class Bundix
       parse_options
       handle_magic
       handle_lock
-      handle_init
       gemset = build_gemset
       save_gemset(gemset)
     end
@@ -114,22 +113,6 @@ class Bundix
 
     def shell_nix_context
       ShellNixContext.from_hash(options)
-    end
-
-    def shell_nix_string
-      tmpl = ERB.new(File.read(File.expand_path("../../template/shell-nix.erb", __dir__)))
-      tmpl.result(shell_nix_context.bind)
-    end
-
-    def handle_init
-      if options[:init]
-        if File.file?("shell.nix")
-          warn "won't override existing shell.nix but here is what it'd look like:"
-          puts shell_nix_string
-        else
-          File.write("shell.nix", shell_nix_string)
-        end
-      end
     end
 
     def handle_lock
