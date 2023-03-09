@@ -1,3 +1,3 @@
 class Bundix
-  VERSION = "2.5.0-dev1"
+  VERSION = "0.0.1" # reseting after fork
 end

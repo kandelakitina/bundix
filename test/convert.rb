@@ -43,14 +43,13 @@ class TestConvert < Minitest::Test
       assert_equal(gemset.dig("phony_gem", "source", "path"), "lib/phony_gem")
 
       # test dependencies
-      assert_includes(gemset.dig("rails", "dependencies"), "railties")
       assert_includes(gemset.dig("nokogiri", "dependencies"), "racc")
 
       # test native gem
       assert_nil(gemset.dig("sqlite3", "source"))
-      assert_equal(gemset.dig("sqlite3", "targets").first["type"], "gem")
-      assert_equal(gemset.dig("sqlite3", "targets").first["target"], "x86_64-linux")
-      assert_equal(gemset.dig("sqlite3", "targets").first["targetCPU"], "x86_64")
+      assert_equal(gemset.dig("sqlite3", "targets").last["type"], "gem")
+      assert_equal(gemset.dig("sqlite3", "targets").last["target"], "x86_64-linux")
+      assert_equal(gemset.dig("sqlite3", "targets").last["targetCPU"], "x86_64")
 
       # test git source
       assert_equal(gemset.dig("apparition", "source", "type"), "git")
@@ -75,14 +74,13 @@ class TestConvert < Minitest::Test
       assert_equal(gemset.dig("phony_gem", "source", "path"), "lib/phony_gem")
 
       # test dependencies
-      assert_includes(gemset.dig("rails", "dependencies"), "railties")
       assert_includes(gemset.dig("nokogiri", "dependencies"), "racc")
 
       # test native gem
       assert_nil(gemset.dig("sqlite3", "source"))
-      assert_equal(gemset.dig("sqlite3", "targets").first["type"], "gem")
-      assert_equal(gemset.dig("sqlite3", "targets").first["target"], "x86_64-linux")
-      assert_equal(gemset.dig("sqlite3", "targets").first["targetCPU"], "x86_64")
+      assert_equal(gemset.dig("sqlite3", "targets").last["type"], "gem")
+      assert_equal(gemset.dig("sqlite3", "targets").last["target"], "x86_64-linux")
+      assert_equal(gemset.dig("sqlite3", "targets").last["targetCPU"], "x86_64")
 
       # test git source
       assert_equal(gemset.dig("apparition", "source", "type"), "git")

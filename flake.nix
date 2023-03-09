@@ -2,31 +2,37 @@
 
 {
   description =
-    "A formatter for Nix code, intended to easily apply a uniform style.";
+    "Generates a Nix expression for your Bundler-managed application";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
+    fu.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, fu, ... }:
+    with fu.lib;
+    eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        inherit (pkgs) callPackage;
+        ruby = pkgs.ruby_2_7.withPackages (ps: with ps; [ minitest rake ]);
+        bundler = (pkgs.bundler.override { ruby = pkgs.ruby_3_1; });
+        bundix = with pkgs;
+          import ./default.nix {
+            inherit pkgs ruby bundler nix nix-prefetch-git;
+          };
       in {
-        packages = rec {
-          default = bundix;
-          bundix = callPackage ./default.nix { };
-        };
+        packages.default = bundix;
 
         apps.default = {
           type = "app";
-          program = "${self.packages.${system}.bundix}/bin/bundix";
+          program = "${bundix}/bin/bundix";
+        };
+
+        devShells = rec {
+          default = dev;
+          dev = pkgs.mkShell {
+            buildInputs = [ ruby bundler bundix ] ++ (with pkgs; [ rufo ]);
+          };
         };
       });
 }
