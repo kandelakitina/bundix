@@ -176,10 +176,10 @@ class Bundix
 
     def convert_path
       {
-        version: spec.version.to_s,
-        source: {
-          type: "path",
-          path: spec.source.path.to_s,
+        "version" => spec.version.to_s,
+        "source" => {
+          "type" => "path",
+          "path" => spec.source.path.to_s,
         },
       }
     end
@@ -192,18 +192,18 @@ class Bundix
 
       version = spec.version.to_s
       nixspec = {
-        version: version,
-        source: {
-          type: "gem",
-          remotes: (remote ? [remote] : remotes),
-          sha256: hash,
-          target: platform,
+        "version" => version,
+        "source" => {
+          "type" => "gem",
+          "remotes" => (remote ? [remote] : remotes),
+          "sha256" => hash,
+          "target" => platform,
         },
       }
       native_platform = Gem::Platform.new(platform)
       if native_platform.respond_to? :cpu
-        nixspec[:source][:targetCPU] = native_platform.cpu
-        nixspec[:source][:targetOS] = native_platform.os
+        nixspec["source"]["targetCPU"] = native_platform.cpu
+        nixspec["source"]["targetOS"] = native_platform.os
       end
       nixspec
     end
@@ -219,13 +219,13 @@ class Bundix
       puts "#{hash} => #{uri}" if $VERBOSE
 
       {
-        version: spec.version.to_s,
-        source: {
-          type: "git",
-          url: uri.to_s,
-          rev: revision,
-          sha256: hash,
-          fetchSubmodules: submodules,
+        "version" => spec.version.to_s,
+        "source" => {
+          "type" => "git",
+          "url" => uri.to_s,
+          "rev" => revision,
+          "sha256" => hash,
+          "fetchSubmodules" => submodules,
         },
       }
     end

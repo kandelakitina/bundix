@@ -38,50 +38,66 @@ class Bundix
 
   SHA256_32 = %r(^[a-z0-9]{52}$)
 
-  attr_reader :options
+  attr_reader :options, :old_gemset
   attr_accessor :fetcher
+
+  def self.sh(*args, &block)
+    out, status = Open3.capture2(*args)
+    unless block_given? ? block.call(status, out) : status.success?
+      puts "$ #{args.join(" ")}" if $VERBOSE
+      puts out if $VERBOSE
+      fail "command execution failed: #{status}"
+    end
+    out
+  end
 
   def initialize(options)
     @options = { quiet: false, tempfile: nil }.merge(options)
     @fetcher = Fetcher.new
+    @old_gemset = parse_gemset
   end
 
   # Convert the content of Gemfile.lock to bundix's output schema
   def convert
-    old_gemset = parse_gemset
     gemfile, lockfile = options.values_at(:gemfile, :lockfile)
     deps, lock = parse_gemfiles(gemfile, lockfile)
 
     gems = Hash.new { |h, k| h[k] = [] }
 
     lock.specs.each do |spec|
-      gem = build_gemspec(spec, deps)
+      gem = cached_gemspec(spec) || build_gemspec(spec, deps)
+      # gem = build_gemspec(spec, deps)
       if spec.dependencies.any?
-        gem[:dependencies] = spec.dependencies.map(&:name) - ["bundler"]
+        gem["dependencies"] = spec.dependencies.map(&:name) - ["bundler"]
       end
       gems[spec.name] << gem
     end
+
+    # require "pry"
+    # binding.pry
 
     gems.map do |name, variants|
       primary = nil
       targets = []
       variants.each do |v|
-        target = v.dig(:source, :target)
+        target = v.dig("source", "target")
         if target == "ruby" or target.nil?
           primary = v
-          primary[:source][:target] = "ruby" if target.nil?
+          primary["source"]["target"] = "ruby" if target.nil?
         else
-          targets << v[:source]
+          targets << v["source"]
         end
       end
       if primary.nil?
         spec = variants.first.clone
-        spec[:source] = nil
+        spec["source"] = nil
         primary = spec
       end
-      [name, primary.merge(targets: targets)]
+      [name, primary.merge("targets" => targets)]
     end.to_h
   end
+
+  private
 
   def build_gemspec(spec, deps)
     [platforms(spec, deps),
@@ -93,8 +109,28 @@ class Bundix
     {}
   end
 
+  def cached_gemspec(spec)
+    _, cached = old_gemset.find { |k, v|
+      next unless k == spec.name
+      next unless cached_source = v["source"]
+
+      case spec_source = spec.source
+      when Bundler::Source::Git
+        next unless cached_source["type"] == "git"
+        next unless cached_rev = cached_source["rev"]
+        next unless spec_rev = spec_source.options["revision"]
+        spec_rev == cached_rev
+      when Bundler::Source::Rubygems
+        next unless cached_source["type"] == "gem"
+        v["version"] == spec.version.to_s
+      end
+    }
+
+    cached #.transform_keys(&:to_sym) if cached
+  end
+
   def groups(spec, deps)
-    { groups: deps.fetch(spec.name).groups }
+    { "groups" => deps.fetch(spec.name).groups.map(&:to_s) }
   end
 
   def platforms(spec, deps)
@@ -103,24 +139,15 @@ class Bundix
       PLATFORM_MAPPING[platform_name.to_s]
     end.flatten
 
-    { platforms: platforms }
+    { "platforms" => platforms }
   end
 
+  # Read existing gemset.nix if exists to reuse the computed hash
   def parse_gemset
     path = File.expand_path(options[:gemset])
     return {} unless File.file?(path)
     json = Bundix.sh(NIX_INSTANTIATE, "--eval", "-E", %(
       builtins.toJSON (import #{Nixer.serialize(path)})))
     JSON.parse(json.strip.gsub(/\\"/, '"')[1..-2])
-  end
-
-  def self.sh(*args, &block)
-    out, status = Open3.capture2(*args)
-    unless block_given? ? block.call(status, out) : status.success?
-      puts "$ #{args.join(" ")}" if $VERBOSE
-      puts out if $VERBOSE
-      fail "command execution failed: #{status}"
-    end
-    out
   end
 end
