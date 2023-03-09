@@ -1,19 +1,19 @@
-require 'bundler'
-require 'json'
-require 'open-uri'
-require 'open3'
-require 'pp'
+require "bundler"
+require "json"
+require "open-uri"
+require "open3"
+require "pp"
 
-require_relative 'bundix/version'
-require_relative 'bundix/source'
-require_relative 'bundix/nixer'
+require_relative "bundix/version"
+require_relative "bundix/source"
+require_relative "bundix/nixer"
 
 class Bundix
-  NIX_INSTANTIATE = 'nix-instantiate'
-  NIX_PREFETCH_URL = 'nix-prefetch-url'
-  NIX_PREFETCH_GIT = 'nix-prefetch-git'
-  NIX_HASH = 'nix-hash'
-  NIX_SHELL = 'nix-shell'
+  NIX_INSTANTIATE = "nix-instantiate"
+  NIX_PREFETCH_URL = "nix-prefetch-url"
+  NIX_PREFETCH_GIT = "nix-prefetch-git"
+  NIX_HASH = "nix-hash"
+  NIX_SHELL = "nix-shell"
 
   SHA256_32 = %r(^[a-z0-9]{52}$)
 
@@ -22,7 +22,7 @@ class Bundix
   attr_accessor :fetcher
 
   class Dependency < Bundler::Dependency
-    def initialize(name, version, options={}, &blk)
+    def initialize(name, version, options = {}, &blk)
       super(name, version, options, &blk)
       @bundix_version = version
     end
@@ -45,7 +45,7 @@ class Bundix
     lock.specs.reverse_each do |spec|
       gem = convert_spec(spec, dep_cache)
       if spec.dependencies.any?
-        gem[:dependencies] = spec.dependencies.map(&:name) - ['bundler']
+        gem[:dependencies] = spec.dependencies.map(&:name) - ["bundler"]
       end
       gems[spec.name] << gem
     end
@@ -72,25 +72,25 @@ class Bundix
   end
 
   def groups(spec, dep_cache)
-    {groups: dep_cache.fetch(spec.name).groups}
+    { groups: dep_cache.fetch(spec.name).groups }
   end
 
   PLATFORM_MAPPING = {}
 
   {
-    "ruby" => [{engine: "ruby"}, {engine:"rbx"}, {engine:"maglev"}],
-    "mri" => [{engine: "ruby"}, {engine: "maglev"}],
-    "rbx" => [{engine: "rbx"}],
-    "jruby" => [{engine: "jruby"}],
-    "mswin" => [{engine: "mswin"}],
-    "mswin64" => [{engine: "mswin64"}],
-    "mingw" => [{engine: "mingw"}],
-    "truffleruby" => [{engine: "ruby"}],
-    "x64_mingw" => [{engine: "mingw"}],
+    "ruby" => [{ engine: "ruby" }, { engine: "rbx" }, { engine: "maglev" }],
+    "mri" => [{ engine: "ruby" }, { engine: "maglev" }],
+    "rbx" => [{ engine: "rbx" }],
+    "jruby" => [{ engine: "jruby" }],
+    "mswin" => [{ engine: "mswin" }],
+    "mswin64" => [{ engine: "mswin64" }],
+    "mingw" => [{ engine: "mingw" }],
+    "truffleruby" => [{ engine: "ruby" }],
+    "x64_mingw" => [{ engine: "mingw" }],
   }.each do |name, list|
     PLATFORM_MAPPING[name] = list
     %w(1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6).each do |version|
-      PLATFORM_MAPPING["#{name}_#{version.sub(/[.]/,'')}"] = list.map do |platform|
+      PLATFORM_MAPPING["#{name}_#{version.sub(/[.]/, "")}"] = list.map do |platform|
         platform.merge(:version => version)
       end
     end
@@ -102,14 +102,13 @@ class Bundix
       PLATFORM_MAPPING[platform_name.to_s]
     end.flatten
 
-    {platforms: platforms}
+    { platforms: platforms }
   end
 
   def convert_spec(spec, dep_cache)
-    [ platforms(spec, dep_cache),
-      groups(spec, dep_cache),
-      Source.new(spec, fetcher).convert,
-    ].inject(&:merge)
+    [platforms(spec, dep_cache),
+     groups(spec, dep_cache),
+     Source.new(spec, fetcher).convert].inject(&:merge)
   rescue => ex
     warn "Skipping #{spec.name}: #{ex}"
     puts ex.backtrace
@@ -145,7 +144,7 @@ class Bundix
             changed = true
             dep_cache[cached.name] = (Dependency.new(cached.name, nil, {
               "group" => as_dep.groups | cached.groups,
-              "platforms" => as_dep.platforms | cached.platforms
+              "platforms" => as_dep.platforms | cached.platforms,
             }))
 
             cc = dep_cache[cached.name]
@@ -164,7 +163,7 @@ class Bundix
   def self.sh(*args, &block)
     out, status = Open3.capture2(*args)
     unless block_given? ? block.call(status, out) : status.success?
-      puts "$ #{args.join(' ')}" if $VERBOSE
+      puts "$ #{args.join(" ")}" if $VERBOSE
       puts out if $VERBOSE
       fail "command execution failed: #{status}"
     end

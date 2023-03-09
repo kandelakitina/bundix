@@ -1,5 +1,5 @@
-require 'minitest/autorun'
-require 'bundix'
+require "minitest/autorun"
+require "bundix"
 
 class TestShellNixContext < Minitest::Test
   def test_commandline_populates_context

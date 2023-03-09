@@ -1,5 +1,5 @@
-require 'minitest/autorun'
-require 'bundix/commandline'
+require "minitest/autorun"
+require "bundix/commandline"
 
 class CommandLineTest < Minitest::Test
   def setup
@@ -29,6 +29,5 @@ in stdenv.mkDerivation {
   buildInputs = [ env ];
 }
 SHELLNIX
-
   end
 end

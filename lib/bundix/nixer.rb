@@ -1,11 +1,11 @@
-require 'erb'
+require "erb"
 
 class Hash
   # regretfully, duckpunching
   def <=>(other)
     if other.is_a?(Hash)
-      larray = to_a.sort{|l,r| Bundix::Nixer.order(l,r)}
-      rarray = other.to_a.sort{|l,r| Bundix::Nixer.order(l,r)}
+      larray = to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
+      rarray = other.to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
       larray <=> rarray
     else
       nil
@@ -58,11 +58,11 @@ class Bundix
     end
 
     def indent
-      ' ' * (level + 2)
+      " " * (level + 2)
     end
 
     def outdent
-      ' ' * level
+      " " * level
     end
 
     def sub(obj, indent = 0)
@@ -90,7 +90,7 @@ class Bundix
       when Pathname
         str = obj.to_s
         if %r{/} !~ str
-          "./"+ str
+          "./" + str
         else
           str
         end

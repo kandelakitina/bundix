@@ -20,8 +20,8 @@ class Bundix
       end
 
       begin
-        open(uri.to_s, 'r', 0600, open_options) do |net|
-          File.open(file, 'wb+') { |local|
+        open(uri.to_s, "r", 0600, open_options) do |net|
+          File.open(file, "wb+") { |local|
             File.copy_stream(net, local)
           }
         end
@@ -33,10 +33,10 @@ class Bundix
     end
 
     def inject_credentials_from_bundler_settings(uri)
-      @bundler_settings ||= Bundler::Settings.new(Bundler.root + '.bundle')
+      @bundler_settings ||= Bundler::Settings.new(Bundler.root + ".bundle")
 
       if val = @bundler_settings[uri.host]
-        uri.user, uri.password = val.split(':', 2)
+        uri.user, uri.password = val.split(":", 2)
       end
     end
 
@@ -54,41 +54,41 @@ class Bundix
     end
 
     def nix_prefetch_url(url)
-      dir = File.join(ENV['XDG_CACHE_HOME'] || "#{ENV['HOME']}/.cache", 'bundix')
+      dir = File.join(ENV["XDG_CACHE_HOME"] || "#{ENV["HOME"]}/.cache", "bundix")
       FileUtils.mkdir_p dir
-      file = File.join(dir, url.gsub(/[^\w-]+/, '_'))
+      file = File.join(dir, url.gsub(/[^\w-]+/, "_"))
 
       download(file, url) unless File.size?(file)
       return unless File.size?(file)
 
       sh(
         Bundix::NIX_PREFETCH_URL,
-        '--type', 'sha256',
-        '--name', File.basename(url), # --name mygem-1.2.3.gem
+        "--type", "sha256",
+        "--name", File.basename(url), # --name mygem-1.2.3.gem
         "file://#{file}",             # file:///.../https_rubygems_org_gems_mygem-1_2_3_gem
-      ).force_encoding('UTF-8').strip
+      ).force_encoding("UTF-8").strip
     rescue => ex
       puts ex
       nil
     end
 
     def nix_prefetch_git(uri, revision, submodules: false)
-      home = ENV['HOME']
-      ENV['HOME'] = '/homeless-shelter'
+      home = ENV["HOME"]
+      ENV["HOME"] = "/homeless-shelter"
 
       args = []
-      args << '--url' << uri
-      args << '--rev' << revision
-      args << '--hash' << 'sha256'
-      args << '--fetch-submodules' if submodules
+      args << "--url" << uri
+      args << "--rev" << revision
+      args << "--hash" << "sha256"
+      args << "--fetch-submodules" if submodules
 
       sh(NIX_PREFETCH_GIT, *args)
     ensure
-      ENV['HOME'] = home
+      ENV["HOME"] = home
     end
 
     def format_hash(hash)
-      sh(NIX_HASH, '--type', 'sha256', '--to-base32', hash)[SHA256_32]
+      sh(NIX_HASH, "--type", "sha256", "--to-base32", hash)[SHA256_32]
     end
 
     def fetch_local_hash(spec)
@@ -97,10 +97,10 @@ class Bundix
       filename = has_platform ? "#{name_version}-*" : name_version
 
       paths = spec.source.caches.map(&:to_s)
-      Dir.glob("{#{paths.join(',')}}/#{filename}.gem").each do |path|
+      Dir.glob("{#{paths.join(",")}}/#{filename}.gem").each do |path|
         if has_platform
           # Find first gem that matches the platform
-          platform = File.basename(path, '.gem')[(name_version.size + 1)..-1]
+          platform = File.basename(path, ".gem")[(name_version.size + 1)..-1]
           next unless spec.platform =~ platform
         end
 
@@ -170,7 +170,7 @@ class Bundix
         convert_path
       else
         pp spec
-        fail 'unknown bundler source'
+        fail "unknown bundler source"
       end
     end
 
@@ -178,14 +178,14 @@ class Bundix
       {
         version: spec.version.to_s,
         source: {
-          type: 'path',
+          type: "path",
           path: spec.source.path.to_s,
         },
       }
     end
 
     def convert_rubygems
-      remotes = spec.source.remotes.map{|remote| remote.to_s.sub(/\/+$/, '') }
+      remotes = spec.source.remotes.map { |remote| remote.to_s.sub(/\/+$/, "") }
       hash, platform = fetcher.fetch_local_hash(spec)
       remote, hash, platform = fetcher.fetch_remotes_hash(spec, remotes) unless hash
       fail "couldn't fetch hash for #{spec.full_name}" unless hash
@@ -194,7 +194,7 @@ class Bundix
       nixspec = {
         version: version,
         source: {
-          type: 'gem',
+          type: "gem",
           remotes: (remote ? [remote] : remotes),
           sha256: hash,
           target: platform,
@@ -209,19 +209,19 @@ class Bundix
     end
 
     def convert_git
-      revision = spec.source.options.fetch('revision')
-      uri = spec.source.options.fetch('uri')
+      revision = spec.source.options.fetch("revision")
+      uri = spec.source.options.fetch("uri")
       submodules = !!spec.source.submodules
       output = fetcher.nix_prefetch_git(uri, revision, submodules: submodules)
       # FIXME: this is a hack, we should separate $stdout/$stderr in the sh call
-      hash = JSON.parse(output[/({[^}]+})\s*\z/m])['sha256']
+      hash = JSON.parse(output[/({[^}]+})\s*\z/m])["sha256"]
       fail "couldn't fetch hash for #{spec.full_name}" unless hash
       puts "#{hash} => #{uri}" if $VERBOSE
 
       {
         version: spec.version.to_s,
         source: {
-          type: 'git',
+          type: "git",
           url: uri.to_s,
           rev: revision,
           sha256: hash,
