@@ -1,17 +1,17 @@
 # rubocop:disable all
 
-require 'minitest/autorun'
-require 'bundix'
-require 'socket'
-require 'tmpdir'
-require 'base64'
+require "minitest/autorun"
+require "bundix"
+require "socket"
+require "tmpdir"
+require "base64"
 
 class Bundix
   class FetcherTest < MiniTest::Test
     def test_download_with_credentials
-      with_dir(bundler_credential: 'secret') do |dir|
-        with_server(returning_content: 'ok') do |port|
-          file = 'some-file'
+      with_dir(bundler_credential: "secret") do |dir|
+        with_server(returning_content: "ok") do |port|
+          file = "some-file"
 
           assert_equal(File.realpath(dir), Bundler.root.to_s)
 
@@ -19,8 +19,8 @@ class Bundix
             Bundix::Fetcher.new.download(file, "http://127.0.0.1:#{port}/test")
           end
 
-          assert_includes(@request, "Authorization: Basic #{Base64.encode64('secret:').chomp}")
-          assert_equal(File.read(file), 'ok')
+          assert_includes(@request, "Authorization: Basic #{Base64.encode64("secret:").chomp}")
+          assert_equal(File.read(file), "ok")
           assert_empty(out)
           assert_match(/^Downloading .* from http.*$/, err)
         end
@@ -29,8 +29,8 @@ class Bundix
 
     def test_download_without_credentials
       with_dir(bundler_credential: nil) do |dir|
-        with_server(returning_content: 'ok') do |port|
-          file = 'some-file'
+        with_server(returning_content: "ok") do |port|
+          file = "some-file"
 
           assert_equal(File.realpath(dir), Bundler.root.to_s)
 
@@ -38,8 +38,8 @@ class Bundix
             Bundix::Fetcher.new.download(file, "http://127.0.0.1:#{port}/test")
           end
 
-          refute_includes(@request, 'Authorization:')
-          assert_equal(File.read(file), 'ok')
+          refute_includes(@request, "Authorization:")
+          assert_equal(File.read(file), "ok")
           assert_empty(out)
           assert_match(/^Downloading .* from http.*$/, err)
         end
@@ -65,10 +65,10 @@ class Bundix
     end
 
     def with_server(returning_content:)
-      server = TCPServer.new('127.0.0.1', 0)
+      server = TCPServer.new("127.0.0.1", 0)
       port_num = server.addr[1]
 
-      @request = ''
+      @request = ""
 
       Thread.abort_on_exception = true
       thr = Thread.new do

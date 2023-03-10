@@ -39,7 +39,7 @@ class Bundix
 
   SHA256_32 = /^[a-z0-9]{52}$/.freeze
 
-  attr_reader :options, :old_gemset
+  attr_reader :options
   attr_accessor :fetcher
 
   def self.sh(*args, &block)
@@ -56,48 +56,47 @@ class Bundix
     @options = { quiet: false, tempfile: nil }.merge(options)
     @fetcher = Fetcher.new
     @old_gemset = parse_gemset
+    gemfile, lockfile = @options.values_at(:gemfile, :lockfile)
+    @gem_deps, @gem_lock = parse_gemfiles(gemfile, lockfile)
   end
 
   # Convert the content of Gemfile.lock to bundix's output schema
   def convert
-    gemfile, lockfile = options.values_at(:gemfile, :lockfile)
-    deps, lock = parse_gemfiles(gemfile, lockfile)
-
-    gems = Hash.new { |h, k| h[k] = [] }
-
-    lock.specs.each do |spec|
-      gem = cached_gemspec(spec) || build_gemspec(spec, deps)
-      # gem = build_gemspec(spec, deps)
-      gem['dependencies'] = spec.dependencies.map(&:name) - ['bundler'] if spec.dependencies.any?
-      gems[spec.name] << gem
+    specs_by_name = Hash.new { |h, k| h[k] = [] }
+    @gem_lock.specs.each do |spec|
+      specs_by_name[spec.name] << spec
     end
 
-    gems.to_h do |name, variants|
-      primary = nil
-      targets = []
-      variants.each do |v|
-        target = v.dig('source', 'target')
-        if (target == 'ruby') || target.nil?
-          primary = v
-          primary['source']['target'] = 'ruby' if target.nil?
-        else
-          targets << v['source']
-        end
-      end
-      if primary.nil?
-        spec = variants.first.clone
-        spec['source'] = nil
-        primary = spec
-      end
-      [name, primary.merge('targets' => targets)]
+    specs_by_name.transform_values do |specs|
+      cached_gemspec(specs) || build_gemspec(specs)
     end
   end
 
   private
 
-  def build_gemspec(spec, deps)
-    [platforms(spec, deps),
-     groups(spec, deps),
+  def build_gemspec(specs)
+    sources = specs.to_h do |spec|
+      s = build_source(spec)
+      target = s.dig('source', 'target') || 'ruby'
+      [target, s]
+    end
+
+    isruby = proc { |k, _| k == 'ruby' }
+    source_key = proc { |_, v| v['source'] }
+
+    nix_obj = sources.first.last
+                     .merge('targets' => sources.reject(&isruby).map(&source_key))
+                     .merge('source' => sources.select(&isruby).map(&source_key).first)
+
+    deps = specs.first.dependencies
+    nix_obj['dependencies'] = deps.map(&:name) - ['bundler'] if deps.any?
+
+    nix_obj
+  end
+
+  def build_source(spec)
+    [platforms(spec),
+     groups(spec),
      Source.new(spec, fetcher).convert].inject(&:merge)
   rescue StandardError => e
     warn "Skipping #{spec.name}: #{e}"
@@ -105,20 +104,28 @@ class Bundix
     {}
   end
 
-  def cached_gemspec(spec)
-    _, cached = old_gemset.find do |k, v|
+  def cached_gemspec(specs)
+    spec, = specs
+
+    _, cached = @old_gemset.find do |k, v|
       next unless k == spec.name
-      next unless (cached_source = v['source'])
+      next unless (old_source = v['source'])
 
       case spec_source = spec.source
       when Bundler::Source::Git
-        next unless cached_source['type'] == 'git'
-        next unless (cached_rev = cached_source['rev'])
+        next unless old_source['type'] == 'git'
+        next unless (cached_rev = old_source['rev'])
         next unless (spec_rev = spec_source.options['revision'])
 
         spec_rev == cached_rev
       when Bundler::Source::Rubygems
-        next unless cached_source['type'] == 'gem'
+        next unless old_source['type'] == 'gem'
+
+        # if changes are made to platform targets, recalculate
+        old_targets = v['targets'].map { |i| i['target'] }
+        old_targets << v.dig('source', 'target') if v['source']
+        new_targets = specs.map(&:platform).map(&:to_s)
+        next unless old_targets.sort == new_targets.sort
 
         v['version'] == spec.version.to_s
       end
@@ -127,13 +134,13 @@ class Bundix
     cached
   end
 
-  def groups(spec, deps)
-    { 'groups' => deps.fetch(spec.name).groups.map(&:to_s) }
+  def groups(spec)
+    { 'groups' => @gem_deps.fetch(spec.name).groups.map(&:to_s) }
   end
 
-  def platforms(spec, deps)
+  def platforms(spec)
     # c.f. Bundler::CurrentRuby
-    platforms = deps.fetch(spec.name).platforms.map do |platform_name|
+    platforms = @gem_deps.fetch(spec.name).platforms.map do |platform_name|
       platform_mapping[platform_name.to_s]
     end.flatten
 

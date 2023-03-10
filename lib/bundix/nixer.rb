@@ -31,7 +31,6 @@ class Bundix
           return class_order(left, right) if cmp.nil?
 
           return cmp
-
         end
 
         class_order(left, right)
