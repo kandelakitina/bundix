@@ -45,9 +45,13 @@ class TestConvert < Minitest::Test
 
     # test native gem
     assert_nil(gemset.dig('sqlite3', 'source'))
-    assert_equal(gemset.dig('sqlite3', 'targets').last['type'], 'gem')
-    assert_equal(gemset.dig('sqlite3', 'targets').last['target'], 'x86_64-linux')
-    assert_equal(gemset.dig('sqlite3', 'targets').last['targetCPU'], 'x86_64')
+
+    # test targets
+    actual_targets = gemset.dig('sqlite3', 'targets')
+    assert_equal(actual_targets.map { |t| t['target'] }.sort, %w[arm64-darwin x86_64-linux])
+    assert_equal(actual_targets.map { |t| t['targetCPU'] }.sort, %w[arm64 x86_64])
+    assert_equal(actual_targets.map { |t| t['targetOS'] }.sort, %w[darwin linux])
+    assert_equal(actual_targets.map { |t| t['type'] }, %w[gem gem])
 
     # test git source
     assert_equal(gemset.dig('apparition', 'source', 'type'), 'git')

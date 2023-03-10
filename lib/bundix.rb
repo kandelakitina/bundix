@@ -109,22 +109,23 @@ class Bundix
 
     _, cached = @old_gemset.find do |k, v|
       next unless k == spec.name
-      next unless (old_source = v['source'])
 
       case spec_source = spec.source
       when Bundler::Source::Git
+        next unless (old_source = v['source'])
         next unless old_source['type'] == 'git'
         next unless (cached_rev = old_source['rev'])
         next unless (spec_rev = spec_source.options['revision'])
 
         spec_rev == cached_rev
       when Bundler::Source::Rubygems
-        next unless old_source['type'] == 'gem'
+        next unless (v['targets'] + [v['source']]).compact.first['type'] == 'gem'
 
         # if changes are made to platform targets, recalculate
         old_targets = v['targets'].map { |i| i['target'] }
         old_targets << v.dig('source', 'target') if v['source']
         new_targets = specs.map(&:platform).map(&:to_s)
+
         next unless old_targets.sort == new_targets.sort
 
         v['version'] == spec.version.to_s
