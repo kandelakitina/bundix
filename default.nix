@@ -1,10 +1,10 @@
-{ pkgs ? (import <nixpkgs> { }), ruby ? pkgs.ruby_2_7
-, bundler ? (pkgs.bundler.override { inherit ruby; }), nix ? pkgs.nix
-, nix-prefetch-git ? pkgs.nix-prefetch-git, }:
+{ pkgs, ruby, bundler, nix, nix-prefetch-git }:
+
 pkgs.stdenv.mkDerivation rec {
-  version = "2.5.0-f3";
+  version = "0.0.1";
   name = "bundix";
   src = ./.;
+
   phases = "installPhase";
   installPhase = ''
     mkdir -p $out
@@ -17,7 +17,7 @@ pkgs.stdenv.mkDerivation rec {
   '';
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
-  buildInputs = [ ruby bundler ];
+  buildInputs = [ bundler ];
 
   meta = {
     inherit version;
@@ -28,9 +28,9 @@ pkgs.stdenv.mkDerivation rec {
       The output is then usable by the bundlerEnv derivation to list all the
       dependencies of a ruby package.
     '';
-    homepage = "https://github.com/manveru/bundix";
+    homepage = "https://github.com/sagittaros/bundix";
     license = "MIT";
-    maintainers = with pkgs.lib.maintainers; [ manveru zimbatm ];
+    maintainers = with pkgs.lib.maintainers; [ manveru zimbatm sagittaros ];
     platforms = pkgs.lib.platforms.all;
   };
 }
