@@ -91,7 +91,6 @@
     platforms = [];
     source = {
       path = "lib/phony_gem";
-      target = "ruby";
       type = "path";
     };
     targets = [];
