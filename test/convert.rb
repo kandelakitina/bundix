@@ -34,64 +34,47 @@ class TestConvert < Minitest::Test
     Bundler.reset!
   end
 
+  def expect_matches(gemset)
+    # test local gem
+    assert_equal(gemset.dig('phony_gem', 'version'), '0.1.0')
+    assert_equal(gemset.dig('phony_gem', 'source', 'type'), 'path')
+    assert_equal(gemset.dig('phony_gem', 'source', 'path'), 'lib/phony_gem')
+
+    # test dependencies
+    assert_includes(gemset.dig('nokogiri', 'dependencies'), 'racc')
+
+    # test native gem
+    assert_nil(gemset.dig('sqlite3', 'source'))
+    assert_equal(gemset.dig('sqlite3', 'targets').last['type'], 'gem')
+    assert_equal(gemset.dig('sqlite3', 'targets').last['target'], 'x86_64-linux')
+    assert_equal(gemset.dig('sqlite3', 'targets').last['targetCPU'], 'x86_64')
+
+    # test git source
+    assert_equal(gemset.dig('apparition', 'source', 'type'), 'git')
+    assert_equal(gemset.dig('apparition', 'source', 'url'),
+                 'https://github.com/twalpole/apparition.git')
+    assert_equal(gemset.dig('apparition', 'source', 'rev'),
+                 'ca86be4d54af835d531dbcd2b86e7b2c77f85f34')
+    assert_equal(gemset.dig('apparition', 'source', 'fetchSubmodules'), false)
+    assert_equal(gemset.dig('apparition', 'targets'), [])
+  end
+
   def test_bundler_dep
     with_gemset(
-      gemfile: File.expand_path('data/rails-app/Gemfile', __dir__),
-      lockfile: File.expand_path('data/rails-app/Gemfile.lock', __dir__)
+      gemfile: File.expand_path('apps/rails-app/Gemfile', __dir__),
+      lockfile: File.expand_path('apps/rails-app/Gemfile.lock', __dir__)
     ) do |gemset|
-      # test local gem
-      assert_equal(gemset.dig('phony_gem', 'version'), '0.1.0')
-      assert_equal(gemset.dig('phony_gem', 'source', 'type'), 'path')
-      assert_equal(gemset.dig('phony_gem', 'source', 'path'), 'lib/phony_gem')
-
-      # test dependencies
-      assert_includes(gemset.dig('nokogiri', 'dependencies'), 'racc')
-
-      # test native gem
-      assert_nil(gemset.dig('sqlite3', 'source'))
-      assert_equal(gemset.dig('sqlite3', 'targets').last['type'], 'gem')
-      assert_equal(gemset.dig('sqlite3', 'targets').last['target'], 'x86_64-linux')
-      assert_equal(gemset.dig('sqlite3', 'targets').last['targetCPU'], 'x86_64')
-
-      # test git source
-      assert_equal(gemset.dig('apparition', 'source', 'type'), 'git')
-      assert_equal(gemset.dig('apparition', 'source', 'url'),
-                   'https://github.com/twalpole/apparition.git')
-      assert_equal(gemset.dig('apparition', 'source', 'rev'),
-                   'ca86be4d54af835d531dbcd2b86e7b2c77f85f34')
-      assert_equal(gemset.dig('apparition', 'source', 'fetchSubmodules'), false)
-      assert_equal(gemset.dig('apparition', 'targets'), [])
+      expect_matches(gemset)
     end
   end
 
   def test_gemset_cache
     with_gemset(
-      gemfile: File.expand_path('data/rails-app/Gemfile', __dir__),
-      lockfile: File.expand_path('data/rails-app/Gemfile.lock', __dir__),
-      gemset: File.expand_path('data/rails-app/gemset.nix', __dir__)
+      gemfile: File.expand_path('apps/rails-app/Gemfile', __dir__),
+      lockfile: File.expand_path('apps/rails-app/Gemfile.lock', __dir__),
+      gemset: File.expand_path('apps/rails-app/gemset.nix', __dir__)
     ) do |gemset|
-      # test local gem
-      assert_equal(gemset.dig('phony_gem', 'version'), '0.1.0')
-      assert_equal(gemset.dig('phony_gem', 'source', 'type'), 'path')
-      assert_equal(gemset.dig('phony_gem', 'source', 'path'), 'lib/phony_gem')
-
-      # test dependencies
-      assert_includes(gemset.dig('nokogiri', 'dependencies'), 'racc')
-
-      # test native gem
-      assert_nil(gemset.dig('sqlite3', 'source'))
-      assert_equal(gemset.dig('sqlite3', 'targets').last['type'], 'gem')
-      assert_equal(gemset.dig('sqlite3', 'targets').last['target'], 'x86_64-linux')
-      assert_equal(gemset.dig('sqlite3', 'targets').last['targetCPU'], 'x86_64')
-
-      # test git source
-      assert_equal(gemset.dig('apparition', 'source', 'type'), 'git')
-      assert_equal(gemset.dig('apparition', 'source', 'url'),
-                   'https://github.com/twalpole/apparition.git')
-      assert_equal(gemset.dig('apparition', 'source', 'rev'),
-                   'ca86be4d54af835d531dbcd2b86e7b2c77f85f34')
-      assert_equal(gemset.dig('apparition', 'source', 'fetchSubmodules'), false)
-      assert_equal(gemset.dig('apparition', 'targets'), [])
+      expect_matches(gemset)
     end
   end
 end
