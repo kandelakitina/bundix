@@ -11,21 +11,19 @@ require_relative 'shell_nix_context'
 
 class Bundix
   class CommandLine
-    DEFAULT_OPTIONS = {
-      ruby: 'ruby',
-      bundle_pack_path: 'vendor/bundle',
-      gemfile: 'Gemfile',
-      lockfile: 'Gemfile.lock',
-      gemset: 'gemset.nix',
-      project: File.basename(Dir.pwd)
-    }.freeze
-
     def self.run
       new.run
     end
 
     def initialize
-      @options = DEFAULT_OPTIONS.clone
+      @options = {
+        ruby: 'ruby',
+        bundle_pack_path: 'vendor/bundle',
+        gemfile: 'Gemfile',
+        lockfile: 'Gemfile.lock',
+        gemset: 'gemset.nix',
+        project: File.basename(Dir.pwd)
+      }
     end
 
     attr_accessor :options
