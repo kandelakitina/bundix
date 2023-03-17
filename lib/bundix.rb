@@ -55,7 +55,7 @@ class Bundix
   def initialize(options)
     @options = { quiet: false, tempfile: nil }.merge(options)
     @fetcher = Fetcher.new
-    @old_gemset = parse_gemset
+    @old_gemset = parse_gemset or {}
     gemfile, lockfile = @options.values_at(:gemfile, :lockfile)
     @gem_deps, @gem_lock = parse_gemfiles(gemfile, lockfile)
   end
