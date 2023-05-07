@@ -14,7 +14,7 @@
     eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        ruby = pkgs.ruby_2_7.withPackages
+        ruby = pkgs.ruby_3_1.withPackages
           (ps: with ps; [ minitest rake solargraph rubocop pry ]);
         bundler = (pkgs.bundler.override { ruby = pkgs.ruby_3_1; });
         bundix = with pkgs;
