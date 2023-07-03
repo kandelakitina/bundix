@@ -30,6 +30,8 @@ platform_mapping = {}
   end
 end
 
+PLATFORM_MAPPING = platform_mapping
+
 class Bundix
   NIX_INSTANTIATE = 'nix-instantiate'
   NIX_PREFETCH_URL = 'nix-prefetch-url'
@@ -142,7 +144,7 @@ class Bundix
   def platforms(spec)
     # c.f. Bundler::CurrentRuby
     platforms = @gem_deps.fetch(spec.name).platforms.map do |platform_name|
-      platform_mapping[platform_name.to_s]
+      PLATFORM_MAPPING[platform_name.to_s]
     end.flatten
 
     { 'platforms' => platforms }
