@@ -5,7 +5,6 @@ pkgs.stdenv.mkDerivation rec {
   name = "bundix";
   src = ./.;
 
-  phases = "installPhase";
   installPhase = ''
     mkdir -p $out
     makeWrapper $src/bin/bundix $out/bin/bundix \
