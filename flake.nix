@@ -4,36 +4,42 @@
   description =
     "Generates a Nix expression for your Bundler-managed application";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    fu.url = "github:numtide/flake-utils";
-  };
+  outputs = { self, nixpkgs, ... }:
+  let
+    eachDefaultSystem = with nixpkgs.lib; let
+      nestInto = name: val: { ${name} = val; };
+      specialize = block: sys: mapAttrs (_: nestInto sys) (block sys);
+      mergeSets = foldl recursiveUpdate {};
+      forEachSystem = forEach systems.flakeExposed;
+    in
+      perSystemBlock: mergeSets (forEachSystem (specialize perSystemBlock));
 
-  outputs = { self, nixpkgs, fu, ... }:
-    with fu.lib;
-    eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-        ruby = pkgs.ruby_3_1.withPackages
-          (ps: with ps; [ minitest rake solargraph rubocop pry ]);
-        bundler = (pkgs.bundler.override { ruby = pkgs.ruby_3_1; });
-        bundix = with pkgs;
-          import ./default.nix {
-            inherit pkgs ruby bundler nix nix-prefetch-git;
-          };
-      in {
-        packages.default = bundix;
+  in
+    eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
 
-        apps.default = {
-          type = "app";
-          program = "${bundix}/bin/bundix";
-        };
+      rubyCurrent = pkgs.ruby_3_1;
 
-        devShells = rec {
-          default = dev;
-          dev = pkgs.mkShell {
-            buildInputs = [ ruby bundler bundix ] ++ (with pkgs; [ rufo ]);
-          };
-        };
-      });
+      ruby = rubyCurrent.withPackages (ps: with ps; [
+        minitest rake solargraph rubocop pry
+      ]);
+
+      bundler = pkgs.bundler.override { ruby = rubyCurrent; };
+
+      bundix = import ./default.nix {
+        inherit pkgs ruby bundler;
+        inherit (pkgs) nix nix-prefetch-git;
+      };
+    in {
+      packages.default = bundix;
+
+      apps.default = {
+        type = "app";
+        program = nixpkgs.lib.getExe bundix;
+      };
+
+      devShells.default = pkgs.mkShell {
+        buildInputs = [ ruby bundler bundix pkgs.rufo ];
+      };
+    });
 }
