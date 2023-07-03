@@ -9,9 +9,7 @@ require_relative 'bundix/version'
 require_relative 'bundix/source'
 require_relative 'bundix/nixer'
 
-platform_mapping = {}
-
-{
+PLATFORM_MAPPING = {
   'ruby' => [{ engine: 'ruby' }, { engine: 'rbx' }, { engine: 'maglev' }],
   'mri' => [{ engine: 'ruby' }, { engine: 'maglev' }],
   'rbx' => [{ engine: 'rbx' }],
@@ -21,16 +19,14 @@ platform_mapping = {}
   'mingw' => [{ engine: 'mingw' }],
   'truffleruby' => [{ engine: 'ruby' }],
   'x64_mingw' => [{ engine: 'mingw' }]
-}.each do |name, list|
-  platform_mapping[name] = list
+}.each_with_object({}) do |(name, list), mappings|
+  mappings[name] = list
   %w[1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2].each do |version|
-    platform_mapping["#{name}_#{version.sub(/[.]/, '')}"] = list.map do |platform|
+    mappings["#{name}_#{version.sub(/[.]/, '')}"] = list.map do |platform|
       platform.merge(version: version)
     end
   end
 end
-
-PLATFORM_MAPPING = platform_mapping
 
 class Bundix
   NIX_INSTANTIATE = 'nix-instantiate'
