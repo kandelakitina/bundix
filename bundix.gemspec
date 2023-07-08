@@ -6,10 +6,10 @@ Gem::Specification.new do |s|
   s.name = 'bundix'
   s.version = Bundix::VERSION
   s.licenses = ['MIT']
-  s.homepage = 'https://github.com/sagittaros/bundix'
+  s.homepage = 'https://github.com/inscapist/bundix'
   s.summary = 'Creates Nix packages from Gemfiles.'
   s.description = 'Creates Nix packages from Gemfiles.'
-  s.authors = ['Felix Tioh']
+  s.authors = ['Xilef']
   s.files = Dir['bin/*'] +
             Dir['lib/**/*.{rb,nix,erb}']
   s.bindir = 'bin'
