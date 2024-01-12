@@ -8,7 +8,7 @@ pkgs.stdenv.mkDerivation rec {
   installPhase = ''
     mkdir -p $out
     makeWrapper $src/bin/bundix $out/bin/bundix \
-      --prefix PATH : "${nix.out}/bin" \
+      --suffix PATH : "${nix.out}/bin" \
       --prefix PATH : "${nix-prefetch-git.out}/bin" \
       --prefix PATH : "${bundler.out}/bin" \
       --prefix PATH : "${ruby}/bin" \

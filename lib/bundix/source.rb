@@ -6,29 +6,47 @@ class Bundix
       Bundix.sh(...)
     end
 
-    def download(file, url)
+    def download(file, url, limit = 10)
       warn "Downloading #{file} from #{url}"
       uri = URI(url)
-      open_options = {}
 
-      inject_credentials_from_bundler_settings(uri) unless uri.user
+      case uri.scheme
+      when nil # local file path
+        FileUtils.cp(url, file)
+      when 'http', 'https'
+        unless uri.user
+          inject_credentials_from_bundler_settings(uri)
+        end
 
-      if uri.user
-        open_options[:http_basic_authentication] = [uri.user, uri.password]
-        uri.user = nil
-        uri.password = nil
-      end
+        Net::HTTP.start(uri.host, uri.port, use_ssl: (uri.scheme == 'https')) do |http|
+          request = Net::HTTP::Get.new(uri)
+          if uri.user
+            request.basic_auth(uri.user, uri.password)
+          end
 
-      begin
-        URI.parse(uri.to_s).open('r', 0o600, open_options) do |net|
-          File.open(file, 'wb+') do |local|
-            File.copy_stream(net, local)
+          http.request(request) do |resp|
+            case resp
+            when Net::HTTPOK
+              File.open(file, 'wb+') do |local|
+                resp.read_body { |chunk| local.write(chunk) }
+              end
+            when Net::HTTPRedirection
+              location = resp['location']
+              raise "http error: Redirection loop detected" if location == url
+              raise "http error: Too many redirects" if limit < 1
+
+              warn "Redirected to #{location}"
+              download(file, location, limit - 1)
+            when Net::HTTPUnauthorized, Net::HTTPForbidden
+              debrief_access_denied(uri.host)
+              raise "http error #{resp.code}: #{uri.host}"
+            else
+              raise "http error #{resp.code}: #{uri.host}"
+            end
           end
         end
-      rescue OpenURI::HTTPError => e
-        # e.message: "403 Forbidden" or "401 Unauthorized"
-        debrief_access_denied(uri.host) if e.message =~ /^40[13] /
-        raise
+      else
+        raise "Unsupported URL scheme"
       end
     end
 
@@ -64,12 +82,12 @@ class Bundix
 
       sh(
         Bundix::NIX_PREFETCH_URL,
-        "--type", "sha256",
-        "--name", File.basename(url), # --name mygem-1.2.3.gem
-        "file://#{file}" # file:///.../https_rubygems_org_gems_mygem-1_2_3_gem
-      ).force_encoding("UTF-8").strip
-    rescue StandardError => e
-      puts e
+        '--type', 'sha256',
+        '--name', File.basename(url), # --name mygem-1.2.3.gem
+        "file://#{file}",             # file:///.../https_rubygems_org_gems_mygem-1_2_3_gem
+      ).force_encoding('UTF-8').strip
+    rescue StandardError => ex
+      STDERR.puts(ex.full_message)
       nil
     end
 
@@ -105,7 +123,7 @@ class Bundix
           next unless spec.platform =~ platform
         end
 
-        hash = nix_prefetch_url(path)[SHA256_32]
+        hash = nix_prefetch_url(path)&.[](SHA256_32)
         return format_hash(hash), platform if hash
       end
 

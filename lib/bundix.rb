@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require 'bundler'
+require 'fileutils'
 require 'json'
-require 'open-uri'
+require 'net/http'
 require 'open3'
 
 require_relative 'bundix/dependency'
