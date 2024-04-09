@@ -1,7 +1,7 @@
 { pkgs, ruby, bundler, nix, nix-prefetch-git }:
 
 pkgs.stdenv.mkDerivation rec {
-  version = "0.0.6";
+  version = "0.0.7";
   name = "bundix";
   src = ./.;
 
