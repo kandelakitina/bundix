@@ -20,7 +20,8 @@ PLATFORM_MAPPING = {
   'mswin64' => [{ engine: 'mswin64' }],
   'mingw' => [{ engine: 'mingw' }],
   'truffleruby' => [{ engine: 'ruby' }],
-  'x64_mingw' => [{ engine: 'mingw' }]
+  'x64_mingw' => [{ engine: 'mingw' }],
+  'windows' => [{ engine: 'mswin' }, { engine: 'mswin64' }, { engine: 'mingw' }]
 }.each_with_object({}) do |(name, list), mappings|
   mappings[name] = list
   %w[1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2].each do |version|

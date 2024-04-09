@@ -48,10 +48,10 @@ class TestConvert < Minitest::Test
 
     # test targets
     actual_targets = gemset.dig('sqlite3', 'targets')
-    assert_equal(actual_targets.map { |t| t['target'] }.sort, %w[arm64-darwin x86_64-linux])
-    assert_equal(actual_targets.map { |t| t['targetCPU'] }.sort, %w[arm64 x86_64])
-    assert_equal(actual_targets.map { |t| t['targetOS'] }.sort, %w[darwin linux])
-    assert_equal(actual_targets.map { |t| t['type'] }, %w[gem gem])
+    assert_equal(actual_targets.map { |t| t['target'] }.sort, %w[arm64-darwin x64-mingw-ucrt x86_64-darwin x86_64-linux])
+    assert_equal(actual_targets.map { |t| t['targetCPU'] }.sort, %w[arm64 x64 x86_64 x86_64])
+    assert_equal(actual_targets.map { |t| t['targetOS'] }.sort, %w[darwin darwin linux mingw])
+    assert_equal(actual_targets.map { |t| t['type'] }, %w[gem gem gem gem])
 
     # test git source
     assert_equal(gemset.dig('apparition', 'source', 'type'), 'git')
@@ -61,7 +61,12 @@ class TestConvert < Minitest::Test
                  'ca86be4d54af835d531dbcd2b86e7b2c77f85f34')
     assert_equal(gemset.dig('apparition', 'source', 'fetchSubmodules'), false)
     assert_equal(gemset.dig('apparition', 'targets'), [])
+
+    # test window alias expansion
+    actual_targets = gemset.dig('io-console', 'platforms').map { |h| h.values.first }.sort
+    assert_equal(actual_targets, %w[maglev mingw mswin mswin64 ruby])
   end
+
 
   def test_bundler_dep
     with_gemset(
