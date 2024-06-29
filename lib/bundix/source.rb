@@ -111,6 +111,7 @@ class Bundix
     end
 
     def fetch_local_hash(spec)
+      platform = Gem::Platform::RUBY # default platform value
       has_platform = spec.platform && spec.platform != Gem::Platform::RUBY
       name_version = "#{spec.name}-#{spec.version}"
       filename = has_platform ? "#{name_version}-*" : name_version
