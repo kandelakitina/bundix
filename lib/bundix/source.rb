@@ -95,6 +95,12 @@ class Bundix
       home = ENV["HOME"]
       ENV["HOME"] = "/homeless-shelter"
 
+      uri_parsed = URI(uri)
+      if %w[http https].include?(uri_parsed.scheme) && !uri_parsed.user
+        inject_credentials_from_bundler_settings(uri_parsed)
+        uri = uri_parsed.to_s
+      end
+
       args = []
       args << "--url" << uri
       args << "--rev" << revision
