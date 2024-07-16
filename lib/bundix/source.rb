@@ -113,7 +113,7 @@ class Bundix
     end
 
     def format_hash(hash)
-      sh("nix", "hash", "convert", "--hash-algo", "sha256", "--to", "nix32", hash)[SHA256_32]
+      sh(NIX_HASH, "--type", "sha256", "--to-base32", hash)[SHA256_32]
     end
 
     def fetch_local_hash(spec)
