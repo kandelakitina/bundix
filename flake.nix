@@ -19,7 +19,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        rubyCurrent = pkgs.ruby_3_1;
+        rubyCurrent = pkgs.ruby;
 
         ruby = rubyCurrent.withPackages (ps:
           with ps; [
